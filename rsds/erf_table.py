@@ -62,6 +62,10 @@ def get_globmeanyrly(var, model, experi):
             realize = 'r1i1p3f1'
         elif 'OC' in experi:
             realize = 'r1i1p3f1'
+        elif 'SO2' in experi:
+            realize = 'r1i1p3f1'
+        elif 'NTCF' in experi:
+            realize = 'r1i1p3f1'
         else:
             realize = 'r1i1p1f1'
     elif 'IPSL' in model:
@@ -207,11 +211,13 @@ def Modellist(exp):
     pathdir = '/trd-project1/NS9252K/'
     if 'VOC' in exp:
         var = 'rsut'
+    elif 'NTCF' in exp:
+        var = 'rsus'
     else:
         var = 'rsuscs'
 
 
-    for file in glob.glob(pathdir+'ESGF/CMIP6/*/*/*/piClim-'+exp+'/r*/Amon/rsuscs/*/v*/*'):
+    for file in glob.glob(pathdir+'ESGF/CMIP6/*/*/*/piClim-'+exp+'/r*/Amon/'+var+'/*/v*/*'):
         #print(file)
         
         x = re.search(r'(.*[?!_])(.*)_piClim-',file)
@@ -224,7 +230,7 @@ def Modellist(exp):
                 matchlist.append(x.group(2))
     
     matchlist1 = []
-    for file1 in glob.glob(pathdir+'ESGF/CMIP6/*/*/*/piClim-control/r*/Amon/rsuscs/*/v*/*'):
+    for file1 in glob.glob(pathdir+'ESGF/CMIP6/*/*/*/piClim-control/r*/Amon/'+var+'/*/v*/*'):
         #print(file)
         
         x1 = re.search(r'(.*[?!_])(.*)_piClim-',file1)
