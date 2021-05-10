@@ -60,6 +60,8 @@ def get_globmeanyrly(var, model, experi):
             realize = 'r1i1p3f1'
         elif 'BC' in experi:
             realize = 'r1i1p3f1'
+        elif 'OC' in experi:
+            realize = 'r1i1p3f1'
         else:
             realize = 'r1i1p1f1'
     elif 'IPSL' in model:
