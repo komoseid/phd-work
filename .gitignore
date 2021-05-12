@@ -12,3 +12,6 @@
 /Miniconda3-latest-Linux-x86_64.sh
 /miniconda3
 /noresmdata
+/ice_cores/data
+/ice_cores/output
+/*/*.pyc
