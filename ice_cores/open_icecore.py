@@ -63,39 +63,47 @@ def find_3x3matrix(var_ctrl, lati, long,arealook=False):
         outfile = xr.DataArray(meanval, coords=[point11.year],dims="year")
     return outfile
 
-"""
-# THIS FUNCTIONS DOES NOT WORK AS NEEDED YET - FIX LATER
+
 def dms2deg(coord):
+    # This function accepts coordinates on the format 7°52'34''E 
+    # That is - X°Y'Z''E/W/N/S - just be careful so that you have no 
+    # whitespace in the string you are giving the function.
+    # It will return a coordinate on the decimal format
+    # -----------------------------------------------------
     import re
     regex = re.compile("(\d+)°(\d+)'(?:(\d+)'')?([NESW])")
-    #lat = "45°55'55''N"
-    print(regex.match(coord).groups())
-    #lat = '''51°36'9.18"N'''
-    #deg, minutes, seconds, direction =  regex.match(coord).groups()
+    deg, minutes, seconds, direction =  regex.match(coord).groups()
     decimalcoord = (float(deg) + float(minutes)/60 + float(seconds)/(60*60)) * (-1 if direction in ['W', 'S'] else 1)
     return decimalcoord
-"""
+
 
 def find_eichler_icecore(name, var):
     # load data from ice core spreadsheet sent from Anja Eichler,
     # this includes Colle Gnifetti, Belukha, Lomonosovfonna and Illimani
+    # NB Belukha has no BC!
+    # Ex: data, year, lat, lon = find_mcconnell_icecore('Colle Gnifetti', 'so4')
+    # -----------------------------------------------------------
     obs = pd.ExcelFile('/cluster/home/krisomos/ice_cores/data/Sulfat_BC_ice_cores_Eichler.xlsx')
     ice_latlon = pd.read_excel(obs, name)
-    lat = ice_latlon[name].iloc[0].split(',')[0]
-    lon = ice_latlon[name].iloc[0].split(',')[1]
-    print(lon)
-    #newlat = dms2deg(lat)
-    #newlon = dms2deg(lon)
-    #print(lon, newlon)
+  
+    segments = ice_latlon[name].iloc[0].split(',')
+    lat = segments[0].strip()
+    lon = segments[1].strip()
+    newlat = dms2deg(lat)
+    newlon = dms2deg(lon)
 
     ice_data = pd.read_excel(obs, name, skiprows=2)
     if 'so' in var:
         ice = ice_data['total SO42- (ppb = mg/l)']
     else:
-        ice = ice_data['BC (ppb)']
+        if 'Beluk' in name:
+            print('Belukha has no BC data!')
+            sys.exit()
+        else:
+            ice = ice_data['BC (ppb)']
     ice_year = ice_data.iloc[:,0]
 
-    #print(ice)
+    return ice[::-1], ice_year[::-1], newlat, newlon
 
 def find_mcconnell_icecore(name, var):
     # 
@@ -278,8 +286,13 @@ def write_netcdf_prec(name):
 
 def write_netcdf(name, var):
     # This function writes a netcdffile per model for the area and variable given. 
+    # "name" refers to ice core site, and the function needed to find the ice core data 
+    # depending on the name. 
     # ----------------------------------------------------------------------------
-    data, year, lat, lon = find_mcconnell_icecore(name,var)
+    if 'Beluk' or 'Colle' or 'fonna' 'Illimani' in name:
+        data, year, lat, lon = find_mcconnell_icecore(name,var)
+    else:
+        data, year, lat, lon = find_mcconnell_icecore(name,var)
     models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','EC-Earth3-AerChem'] #'NorESM2-LM','MPI-ESM-1-2-HAM','INM-CM4-8', 'INM-CM5-0',
     
     for j in range(len(models)):
@@ -297,8 +310,13 @@ def write_netcdf(name, var):
 
         outfile.to_netcdf('/cluster/home/krisomos/ice_cores/output/'+var+'_'+models[j]+'_'+name+'_conc.nc')
 
-areas = ['Ngreen','Sgreen','ACT11D','ACT2','NGT_B19','Tunu2013','NEEM_2011_S1','Humboldt','Summit2010','D4']
+
+connell_areas = ['Ngreen','Sgreen','ACT11D','ACT2','NGT_B19','Tunu2013','NEEM_2011_S1','Humboldt','Summit2010','D4']
+eichler_areas = ['Colle Gnifetti', 'Belukha']
+
+"""
 for k in range(len(areas)):
     #write_netcdf_prec(areas[k])
     write_netcdf(areas[k],'so4')
     write_netcdf(areas[k],'bc')
+"""
