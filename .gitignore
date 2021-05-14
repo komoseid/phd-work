@@ -15,3 +15,4 @@
 /ice_cores/data
 /ice_cores/output
 /*/*.pyc
+/ice_cores/__pycache__

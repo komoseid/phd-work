@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue May 11 11:54:13 2021
-sshfs krisomos@login.nird.sigma2.no:/scratch/krisomos/100121/ scratch/
+To run this script you need to mount a folder for the noresmdata that is not already mounted on betzy
+sshfs krisomos@login.nird.sigma2.no:/projects/NS9034K/ noresmdata/
 This script shall open and read the "new" concentration spreadsheets I got from Joe McConnell and Anja Eichler
 ppb = ug/l = ng/g
 @author: kristineom
@@ -40,8 +41,7 @@ def find_3x3matrix(var_ctrl, lati, long,arealook=False):
     point0_1 = var_ctrl.isel(lat=latind,lon=lonind-1)
     
     if arealook==True:
-        #print(point11)
-        #print(point11.squeeze()+point10.squeeze()+point1_1.squeeze()+point_11.squeeze()+point_10.squeeze()+point_1_1.squeeze()+point01.squeeze()+point00.squeeze()+point0_1.squeeze())
+    # This is for when you are calculating the area of the gridpoints in question
         meanval = (point11.squeeze()+point10.squeeze()+point1_1.squeeze()+point_11.squeeze()+point_10.squeeze()+point_1_1.squeeze()+point01.squeeze()+point00.squeeze()+point0_1.squeeze())
         outfile = meanval
     else:
@@ -57,7 +57,7 @@ def find_3x3matrix(var_ctrl, lati, long,arealook=False):
         point00 = point00.groupby('time.year').mean().squeeze()#*(1E6/3.17098E-8)
         point0_1 =point0_1.groupby('time.year').mean().squeeze()#*(1E6/3.17098E-8)
         
-        #meanval = (point11+point10+point1_1+point_11+point_10+point_1_1+point01+point00+point0_1)/9
+        #meanval = (point11+point10+point1_1+point_11+point_10+point_1_1+point01+point00+point0_1)/9 
         meanval = (point11+point10+point1_1+point_11+point_10+point_1_1+point01+point00+point0_1)  #ONLY USE THIS IF YOU ARE DOING ug/g
   
         outfile = xr.DataArray(meanval, coords=[point11.year],dims="year")
@@ -146,6 +146,9 @@ def find_mcconnell_icecore(name, var):
     return ice_data[::-1], ice_year[::-1], icelat, icelon
     
 def lookup(fullpath, var):
+    # This function finds the model data based on path and variable and concatenates
+    # it together if needed, then returns one dataarray with the sorted timeseries of the desired variable
+    # ----------------------------------
     list_of_data = []
     for file in glob.glob(fullpath):
         print(file)
@@ -162,7 +165,8 @@ def lookup(fullpath, var):
         opendata = list_of_data[0]
     return opendata
 
-def model_concentration_timeseries(model, var, lati, longi, greenland=False):
+def model_concentration_timeseries(model, var, lati, longi):
+
     from pathfinder import pathfinder
     from pathfinder import pr_pathfinder
 
@@ -196,6 +200,7 @@ def model_concentration_timeseries(model, var, lati, longi, greenland=False):
     vaat = vaat*area.values*(365*24*60*60)                      # kg
 
     prec = find_3x3matrix(pr,lati,longi)                        # kg m-2 s-1
+    acc = prec
     prec = prec*area.values*(365*24*60*60)                      # kg
 
     tot_dep = np.absolute(torr) + np.absolute(vaat)             # kg
@@ -228,7 +233,52 @@ def model_concentration_timeseries(model, var, lati, longi, greenland=False):
     out = xr.DataArray(conc, name='Conc_Absolute')
     return out
 
+def acc_rate(model, lati, longi):
+    # This function calculates the accumulation rates per ice core site
+    # This is an important first step to check if models are way off on the local "climate" of a site.
+    # ----------------------------------------------
+    from pathfinder import pathfinder
+    from pathfinder import pr_pathfinder
+
+    if 'NorESM' in model:
+        path = '/cluster/home/krisomos/noresmdata/'  #This folder needs to be sshfs-ed as described at top of script
+    else:
+        path = '/trd-project1/' # Betzy
+
+    histprpath, ctrlprpath, areafile                   = pr_pathfinder(model)
+    pr        = lookup(path+histprpath,'pr')
+
+    # Calculate the accumulation rate
+    prec = find_3x3matrix(pr,lati,longi)                        # kg m-2 s-1
+    acc = prec
+
+    out = xr.DataArray(acc, name='Acc_Absolute')
+    return out
+
+def write_netcdf_prec(name):
+    # Write the netcdffile that contains the accumulation rates
+    # ------------------------------
+    data, year, lat, lon = find_mcconnell_icecore(name,'bc')
+    models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','EC-Earth3-AerChem'] #'NorESM2-LM','MPI-ESM-1-2-HAM','INM-CM4-8', 'INM-CM5-0',
+    
+    for j in range(len(models)):
+        if len(lat)>1:
+            outlist = []
+            for i in range(len(lat)):
+                outfile = acc_rate(models[j],lat[i],lon[i])
+                outlist.append(outfile.values)
+
+            outfile = xr.DataArray(np.mean(outlist,axis=0), name='Acc_Absolute')
+            print(outfile)
+        else:
+            outfile = acc_rate(models[j],lat,lon)
+
+        outfile.to_netcdf('/cluster/home/krisomos/ice_cores/output/prec_'+models[j]+'_'+name+'_acc.nc')
+
+
 def write_netcdf(name, var):
+    # This function writes a netcdffile per model for the area and variable given. 
+    # ----------------------------------------------------------------------------
     data, year, lat, lon = find_mcconnell_icecore(name,var)
     models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','EC-Earth3-AerChem'] #'NorESM2-LM','MPI-ESM-1-2-HAM','INM-CM4-8', 'INM-CM5-0',
     
@@ -236,7 +286,7 @@ def write_netcdf(name, var):
         if len(lat)>1:
             outlist = []
             for i in range(len(lat)):
-                outfile = model_concentration_timeseries(models[j],var,lat[i],lon[i],True)
+                outfile = model_concentration_timeseries(models[j],var,lat[i],lon[i])
                 outlist.append(outfile.values)
             #print(outlist)
             outfile = xr.DataArray(np.mean(outlist,axis=0), name='Conc_Absolute')
@@ -246,9 +296,9 @@ def write_netcdf(name, var):
             outfile = model_concentration_timeseries(models[j],var,lat,lon)
 
         outfile.to_netcdf('/cluster/home/krisomos/ice_cores/output/'+var+'_'+models[j]+'_'+name+'_conc.nc')
-        #conc.to_netcdf('/cluster/home/krisomos/ice_cores/output/'+var+'_'+model+'_'+name+'_conc.nc')
 
 areas = ['Ngreen','Sgreen','ACT11D','ACT2','NGT_B19','Tunu2013','NEEM_2011_S1','Humboldt','Summit2010','D4']
 for k in range(len(areas)):
+    #write_netcdf_prec(areas[k])
     write_netcdf(areas[k],'so4')
     write_netcdf(areas[k],'bc')
