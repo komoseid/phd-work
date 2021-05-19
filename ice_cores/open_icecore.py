@@ -71,8 +71,10 @@ def dms2deg(coord):
     # It will return a coordinate on the decimal format
     # -----------------------------------------------------
     import re
-    regex = re.compile("(\d+)°(\d+)'(?:(\d+)'')?([NESW])")
+    regex = re.compile("(\d+)°(\d+)['′](?:(\d+)'')?([NESW])")
     deg, minutes, seconds, direction =  regex.match(coord).groups()
+    if seconds is None:
+        seconds = 0
     decimalcoord = (float(deg) + float(minutes)/60 + float(seconds)/(60*60)) * (-1 if direction in ['W', 'S'] else 1)
     return decimalcoord
 
@@ -88,9 +90,12 @@ def find_eichler_icecore(name, var):
   
     segments = ice_latlon[name].iloc[0].split(',')
     lat = segments[0].strip()
+    print(lat)
     lon = segments[1].strip()
-    newlat = dms2deg(lat)
-    newlon = dms2deg(lon)
+    icelat = []
+    icelon = []
+    icelat.append(dms2deg(lat))
+    icelon.append(dms2deg(lon))
 
     ice_data = pd.read_excel(obs, name, skiprows=2)
     if 'so' in var:
@@ -103,7 +108,8 @@ def find_eichler_icecore(name, var):
             ice = ice_data['BC (ppb)']
     ice_year = ice_data.iloc[:,0]
 
-    return ice[::-1], ice_year[::-1], newlat, newlon
+    return ice[::-1], ice_year[::-1], icelat, icelon
+
 
 def find_mcconnell_icecore(name, var):
     # 
@@ -153,6 +159,39 @@ def find_mcconnell_icecore(name, var):
 
     return ice_data[::-1], ice_year[::-1], icelat, icelon
     
+def find_other_icecore(name, var):
+    # Works with name = ['UFG','McCall_Glacier','Mt Logan','Eclipse','Mt Oxford','Akademii Nauk','ColDuDome','Mt Elbrus']
+    # Note UFG only has BC
+    # Mt Logan and Mt Elbrus only has S
+    #
+    # Ex: data, year, lat, lon = find_other_icecore('UFG', 'bc')
+    #--------------------------------------------------------------------
+    obs = pd.ExcelFile('/cluster/home/krisomos/ice_cores/data/Greenland_data_for_Kine_051521.xlsx')
+    ice = pd.read_excel(obs,name)
+    icename = pd.read_excel(obs,'Core Stats')
+
+    iceinfo = icename[icename['Core'].isin([name])]
+
+    icelat = []
+    icelon = []    
+    icelat.append(iceinfo['Lat'].values[0])
+    icelon.append(iceinfo['Lon'].values[0])
+    
+    if 'bc' in var:
+        if 'ColDuDome' in name:
+            ice_data = ice['CDD_annual_BC_ng/g'].values
+        else:
+            ice_data = ice['BC_ng/g'].values
+    elif 's' in var:
+        if 'ColDuDome' in name:
+            ice_data = ice['CDD_annual S_ng/g'].values
+        else:        
+            ice_data = ice['S_ng/g'].values
+    
+    ice_year = ice['Mid_Year'].values
+
+    return ice_data[::-1], ice_year[::-1], icelat, icelon
+
 def lookup(fullpath, var):
     # This function finds the model data based on path and variable and concatenates
     # it together if needed, then returns one dataarray with the sorted timeseries of the desired variable
@@ -174,7 +213,6 @@ def lookup(fullpath, var):
     return opendata
 
 def model_concentration_timeseries(model, var, lati, longi):
-
     from pathfinder import pathfinder
     from pathfinder import pr_pathfinder
 
@@ -289,10 +327,19 @@ def write_netcdf(name, var):
     # "name" refers to ice core site, and the function needed to find the ice core data 
     # depending on the name. 
     # ----------------------------------------------------------------------------
-    if 'Beluk' or 'Colle' or 'fonna' 'Illimani' in name:
+    #print(name)
+    if 'Colle' in name:
+        data, year, lat, lon = find_eichler_icecore(name,var)
+    elif 'Belukha' in name:
+        data, year, lat, lon = find_eichler_icecore(name,var)
+    elif 'Lomonosov' in name:
+        data, year, lat, lon = find_eichler_icecore(name,var)
+    elif 'Illimani' in name:
+        data, year, lat, lon = find_eichler_icecore(name,var)
+    elif 'green' in name:
         data, year, lat, lon = find_mcconnell_icecore(name,var)
     else:
-        data, year, lat, lon = find_mcconnell_icecore(name,var)
+        data, year, lat, lon = find_other_icecore(name,var)
     models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','EC-Earth3-AerChem'] #'NorESM2-LM','MPI-ESM-1-2-HAM','INM-CM4-8', 'INM-CM5-0',
     
     for j in range(len(models)):
@@ -311,12 +358,15 @@ def write_netcdf(name, var):
         outfile.to_netcdf('/cluster/home/krisomos/ice_cores/output/'+var+'_'+models[j]+'_'+name+'_conc.nc')
 
 
-connell_areas = ['Ngreen','Sgreen','ACT11D','ACT2','NGT_B19','Tunu2013','NEEM_2011_S1','Humboldt','Summit2010','D4']
-eichler_areas = ['Colle Gnifetti', 'Belukha']
+connell_areas = ['Ngreen','Sgreen']#,'ACT11D','ACT2','NGT_B19','Tunu2013','NEEM_2011_S1','Humboldt','Summit2010','D4']
+eichler_areas = ['Colle Gnifetti', 'Belukha', 'Lomonosovfonna','Illimani']
+other_areas_bc = ['UFG','McCall_Glacier','Eclipse','Mt Oxford','Akademii Nauk','ColDuDome']
+other_areas_s = ['ColDuDome','Mt Elbrus'] #'McCall_Glacier','Mt Logan','Eclipse','Mt Oxford','Akademii Nauk',
 
-"""
-for k in range(len(areas)):
-    #write_netcdf_prec(areas[k])
-    write_netcdf(areas[k],'so4')
-    write_netcdf(areas[k],'bc')
-"""
+#write_netcdf(eichler_areas[3],'bc')
+
+
+for k in range(len(other_areas_bc)):
+    #write_netcdf_prec(other_areas_s[k])
+    write_netcdf(other_areas_bc[k],'bc')
+    #write_netcdf(areas[k],'bc')
