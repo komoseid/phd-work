@@ -57,7 +57,7 @@ def find_3x3matrix(var_ctrl, lati, long,arealook=False):
         point00 = point00.groupby('time.year').mean().squeeze()#*(1E6/3.17098E-8)
         point0_1 =point0_1.groupby('time.year').mean().squeeze()#*(1E6/3.17098E-8)
         
-        #meanval = (point11+point10+point1_1+point_11+point_10+point_1_1+point01+point00+point0_1)/9 
+        #meanval = (point11+point10+point1_1+point_11+point_10+point_1_1+point01+point00+point0_1)/9  # for deposition use this 
         meanval = (point11+point10+point1_1+point_11+point_10+point_1_1+point01+point00+point0_1)  #ONLY USE THIS IF YOU ARE DOING ug/g
   
         outfile = xr.DataArray(meanval, coords=[point11.year],dims="year")
