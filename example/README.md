@@ -25,7 +25,7 @@ ice_conc, iceyear, icelat, icelon = icecore_info()
 model_conc = make_concentration(icelat,icelon)
 print(ice_conc,model_conc)
 ```
-The cencentrations are currently just printed, but plotting them together is encouraged for comparing model concentration of black carbon to what is measured in an ice core
+The concentrations are currently just printed, but plotting them together is encouraged for comparing model concentration of black carbon to what is measured in an ice core
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
