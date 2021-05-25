@@ -59,6 +59,6 @@ def make_concentration(icelat,icelon):
 
     return conc
 
-icedata, iceyear, icelat, icelon = icecore_info()
-concentration = make_concentration(icelat,icelon)
-print(icedata,concentration)
+ice_conc, iceyear, icelat, icelon = icecore_info()
+model_conc = make_concentration(icelat,icelon)
+print(ice_conc,model_conc)
