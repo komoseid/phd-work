@@ -17,9 +17,9 @@ If cloning this repository you need to change the path
 ```python
     path = '/cluster/home/krisomos/example/'  
 ```
-in line 42
+in line 42 of the script "examplescript.py".
 
-The script "examplescript.py" contains functions which is called in the end of the script
+"examplescript.py" contains functions which is called in the end of the script
 ```python
 ice_conc, iceyear, icelat, icelon = icecore_info()
 model_conc = make_concentration(icelat,icelon)
