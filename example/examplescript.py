@@ -7,9 +7,9 @@ warnings.simplefilter("ignore")
 # needed for betzy
 os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
 
-def icecore_info():
+def icecore_info(fullpath):
     #### ICE CORE = UPPER FREEMONT GLACIER ####
-    obs = pd.read_csv('/cluster/home/krisomos/example/Upper_freemont_glacier.csv')
+    obs = pd.read_csv(fullpath+'/Upper_freemont_glacier.csv')
     iceyear = obs['Mid_Year'][::-1]
     icedata = obs['BC_ng/g'][::-1].values
     icelat = obs['lat'][0]
@@ -38,12 +38,11 @@ def lookup(fullpath, var):
         opendata = list_of_data[0]
     return opendata
 
-def make_concentration(icelat,icelon):
-    path = '/cluster/home/krisomos/example/'  
-    wetbc_tot = lookup(path,'wetbc')         # kg/m2/s
-    drybc_tot = lookup(path,'drybc')         # kg/m2/s
-    prect_tot = lookup(path,'pr')            # kg/m2/s
-    area_tot  = xr.open_dataset(path+'areacella_fx_CanESM5_historical_r1i1p1f1_gn.nc')['areacella']  # m2
+def make_concentration(fullpath, icelat,icelon):
+    wetbc_tot = lookup(fullpath,'wetbc')         # kg/m2/s
+    drybc_tot = lookup(fullpath,'drybc')         # kg/m2/s
+    prect_tot = lookup(fullpath,'pr')            # kg/m2/s
+    area_tot  = xr.open_dataset(fullpath+'areacella_fx_CanESM5_historical_r1i1p1f1_gn.nc')['areacella']  # m2
 
 
     wetbc = wetbc_tot.sel(lat=icelat,lon=icelon,method='nearest').groupby('time.year').mean()  # kg/m2/s
@@ -59,6 +58,7 @@ def make_concentration(icelat,icelon):
 
     return conc
 
-ice_conc, iceyear, icelat, icelon = icecore_info()
-model_conc = make_concentration(icelat,icelon)
+path = '/cluster/home/krisomos/example/'
+ice_conc, iceyear, icelat, icelon = icecore_info(path)
+model_conc = make_concentration(path,icelat,icelon)
 print(ice_conc,model_conc)
