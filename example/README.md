@@ -21,7 +21,7 @@ in line 12 and
 ```python
     path = '/cluster/home/krisomos/example/'  
 ```
-in line 42 of the script "examplescript.py" to the path where you store the *.nc and*.csv files from this repository. 
+in line 42 of the script "examplescript.py" to the path where you store the *.nc and *.csv files from this repository. 
 
 "examplescript.py" contains functions which is called in the end of the script
 ```python
