@@ -94,7 +94,10 @@ def pr_pathfinder(model):
     elif 'INM-CM' in model:
         histpr = 'NS9252K/ESGF/CMIP6/CMIP/INM/'+model+'/historical/r1i1p1f1/Amon/pr/gr1/v*/*'
         ctrlpr = 'NS9252K/ESGF/CMIP6/CMIP/INM/'+model+'/piControl/r1i1p1f1/Amon/pr/gr1/v*/*'
-        area   = 'NS9252K/ESGF/CMIP6/CMIP/INM/'+model+'/piControl/r1i1p1f1/fx/areacella/gr1/latest/areacella_fx_'+model+'_historical_r1i1p1f1_gr1.nc'
+        if '5-0' in model:
+            area   = 'NS9252K/ESGF/CMIP6/CMIP/INM/INM-CM5-0/historical/r1i1p1f1/fx/areacella/gr1/latest/areacella_fx_INM-CM5-0_historical_r1i1p1f1_gr1.nc'
+        else:
+            area   = 'NS9252K/ESGF/CMIP6/CMIP/INM/'+model+'/piControl/r1i1p1f1/fx/areacella/gr1/latest/areacella_fx_'+model+'_piControl_r1i1p1f1_gr1.nc'
     elif 'GFDL-ESM4' in model:
         histpr = 'NS9252K/ESGF/CMIP6/CMIP/NOAA-GFDL/GFDL-ESM4/historical/r1i1p1f1/Amon/pr/gr1/v*/*'
         ctrlpr = 'NS9252K/ESGF/CMIP6/CMIP/NOAA-GFDL/GFDL-ESM4/piControl/r1i1p1f1/Amon/pr/gr1/v*/*'
@@ -109,6 +112,38 @@ def pr_pathfinder(model):
         area   = 'CMIP6/CMIP/NCC/NorESM2-LM/historical/r1i1p1f1/fx/areacella/gn/latest/areacella_fx_NorESM2-LM_historical_r1i1p1f1_gn.nc'
     return histpr, ctrlpr, area
 
+
+def pathfinder_var(model,var):
+    if 'GISS-E2-1-' in model:
+        # Both models have pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/CMIP/NASA-GISS/'+model+'/historical/r1i1p3f1/AERmon/'+var+'/gn/latest/*'
+    elif 'EC-Earth3-AerChem' in model:
+        # This model has bc as below
+        # This model has pr in similar path but grid is "gr" 
+        hist = 'NS9252K/ESGF/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-AerChem/historical/r1i1p1f1/AERmon/'+var+'/gn/latest/*'
+    elif 'MPI-ESM-1-2-HAM' in model:
+        hist = 'NS9252K/ESGF/CMIP6/CMIP/HAMMOZ-Consortium/MPI-ESM-1-2-HAM/historical/r3i1p1f1/AERmon/'+var+'/gn/latest/*'
+    elif 'CESM2' in model:
+        # both models have pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/CMIP/NCAR/'+model+'/historical/r1i1p1f1/AERmon/'+var+'/gn/latest/*'
+    elif 'CanESM5' in model:
+        # Has pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p1f1/AERmon/'+var+'/gn/latest/*'
+    elif 'INM-CM' in model:
+        # Both models have pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/CMIP/INM/'+model+'/historical/r1i1p1f1/AERmon/'+var+'/gr1/latest/*'
+    elif 'GFDL-ESM4' in model:
+        # Has pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/CMIP/NOAA-GFDL/GFDL-ESM4/historical/r1i1p1f1/AERmon/'+var+'/gr1/latest/*'
+    elif 'CNRM-ESM2-1' in model:
+        # Has pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/CMIP/CNRM-CERFACS/CNRM-ESM2-1/historical/r1i1p1f2/AERmon/'+var+'/gr/latest/*'
+    elif 'NorESM2' in model:
+        # Both has pr as below
+        # MM is missing both so4 and bc in piControl
+        hist = 'CMIP6/CMIP/NCC/'+model+'/historical/r1i1p1f1/AERmon/'+var+'/gn/latest/*'
+    
+    return hist
 """
         histwet = '/historical/r1i1p1f1/AERmon/wet'+var+'/gn/v*/*'
         histdry = '/historical/r1i1p1f1/AERmon/dry'+var+'/gn/v*/*'

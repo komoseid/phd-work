@@ -304,8 +304,8 @@ def acc_rate(model, lati, longi):
 def write_netcdf_prec(name):
     # Write the netcdffile that contains the accumulation rates
     # ------------------------------
-    data, year, lat, lon = find_mcconnell_icecore(name,'bc')
-    models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','EC-Earth3-AerChem'] #'NorESM2-LM','MPI-ESM-1-2-HAM','INM-CM4-8', 'INM-CM5-0',
+    data, year, lat, lon = find_other_icecore(name,'so4')
+    models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','EC-Earth3-AerChem','NorESM2-LM','MPI-ESM-1-2-HAM','INM-CM4-8', 'INM-CM5-0']
     
     for j in range(len(models)):
         if len(lat)>1:
@@ -340,8 +340,8 @@ def write_netcdf(name, var):
         data, year, lat, lon = find_mcconnell_icecore(name,var)
     else:
         data, year, lat, lon = find_other_icecore(name,var)
-    models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','EC-Earth3-AerChem'] #'NorESM2-LM','MPI-ESM-1-2-HAM','INM-CM4-8', 'INM-CM5-0',
-    
+    models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','EC-Earth3-AerChem','NorESM2-LM','MPI-ESM-1-2-HAM','INM-CM4-8', 'INM-CM5-0']
+
     for j in range(len(models)):
         if len(lat)>1:
             outlist = []
@@ -351,7 +351,7 @@ def write_netcdf(name, var):
             #print(outlist)
             outfile = xr.DataArray(np.mean(outlist,axis=0), name='Conc_Absolute')
 
-            print(outfile)
+            #print(outfile)
         else:
             outfile = model_concentration_timeseries(models[j],var,lat,lon)
 
@@ -359,14 +359,14 @@ def write_netcdf(name, var):
 
 
 connell_areas = ['Ngreen','Sgreen']#,'ACT11D','ACT2','NGT_B19','Tunu2013','NEEM_2011_S1','Humboldt','Summit2010','D4']
-eichler_areas = ['Colle Gnifetti', 'Belukha', 'Lomonosovfonna','Illimani']
+eichler_areas = ['Colle Gnifetti', 'Lomonosovfonna','Illimani'] # 'Belukha' has no BC
 other_areas_bc = ['UFG','McCall_Glacier','Eclipse','Mt Oxford','Akademii Nauk','ColDuDome']
-other_areas_s = ['ColDuDome','Mt Elbrus'] #'McCall_Glacier','Mt Logan','Eclipse','Mt Oxford','Akademii Nauk',
+other_areas_s = ['ColDuDome','Mt Elbrus','McCall_Glacier','Mt Logan','Eclipse','Mt Oxford','Akademii Nauk']
 
 #write_netcdf(eichler_areas[3],'bc')
 
 
-for k in range(len(other_areas_bc)):
-    #write_netcdf_prec(other_areas_s[k])
-    write_netcdf(other_areas_bc[k],'bc')
+for k in range(len(other_areas_s)):
+    write_netcdf_prec(other_areas_s[k])
+    #write_netcdf(other_areas_s[k],'so4')
     #write_netcdf(areas[k],'bc')
