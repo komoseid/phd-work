@@ -144,6 +144,20 @@ def pathfinder_var(model,var):
         hist = 'CMIP6/CMIP/NCC/'+model+'/historical/r1i1p1f1/AERmon/'+var+'/gn/latest/*'
     
     return hist
+
+def pathfinder_damip(model,var,mon):
+    if 'CESM2' in model:
+        # both models have pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/DAMIP/NCAR/'+model+'/hist-nat/r1i1p1f1/'+mon+'mon/'+var+'/gn/latest/*'
+    elif 'CanESM5' in model:
+        # Has pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/DAMIP/CCCma/CanESM5/hist-nat/r1i1p1f1/'+mon+'mon/'+var+'/gn/latest/*'
+    elif 'NorESM2' in model:
+        # Both has pr as below
+        # MM is missing both so4 and bc in piControl
+        hist = 'CMIP6/DAMIP/NCC/'+model+'/hist-nat/r1i1p1f1/'+mon+'mon/'+var+'/gn/latest/*'
+    
+    return hist
 """
         histwet = '/historical/r1i1p1f1/AERmon/wet'+var+'/gn/v*/*'
         histdry = '/historical/r1i1p1f1/AERmon/dry'+var+'/gn/v*/*'

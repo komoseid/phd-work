@@ -6,6 +6,7 @@
 /.cache
 /.conda
 /.config
+/.local
 /.ssh
 /.viminfo
 /.vscode-server

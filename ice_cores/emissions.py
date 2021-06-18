@@ -11,8 +11,12 @@ import os,glob
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import sys
 import warnings
+import cartopy.crs as ccrs
+import cftime
+
 warnings.simplefilter("ignore")
 os.environ['HDF5_USE_FILE_LOCKING']='FALSE'
 
@@ -24,7 +28,7 @@ def lookup(fullpath, var):
     list_of_data = []
     for file in glob.glob(fullpath):
         #print(file)
-        opendata = xr.open_dataset(file)[var]
+        opendata = xr.open_dataset(file,decode_times=True, use_cftime=True)[var]
         list_of_data.append(opendata)
     if len(list_of_data) > 1:
         #print('More than one file per model and exp - must concatenate')
@@ -62,6 +66,44 @@ def regionfixer(area,reg_info):
         cyclic = False
     
     return newlonA, newlonB, cyclic, 
+
+def emission_maps(model, var, startyr, endyr):
+    from pathfinder import pathfinder_var, pr_pathfinder
+    
+    if 'NorESM' in model:
+        path = '/cluster/home/krisomos/noresmdata/'  #This folder needs to be sshfs-ed
+    else:
+        path = '/trd-project1/' # Betzy
+    
+    if 'bc' in var:
+        variable = 'emibc'
+    else:
+        variable = 'emiso2'   
+    
+    emipath = pathfinder_var(model,variable)
+    emission = lookup(path+emipath,variable)
+    #print(str(emission.time[0]))
+    sec_2_yr = 1/(365*24*60*60)
+    emission = emission*sec_2_yr*1E12  #gå from sec to yr and from kg to ng
+    if 'CNRM' in model:
+        emission = emission.sel(time=slice(cftime.DatetimeGregorian(startyr, 1, 1),cftime.DatetimeGregorian(endyr, 1, 1))).mean(dim='time')
+    else:
+        emission = emission.sel(time=slice(cftime.DatetimeNoLeap(startyr, 1, 1),cftime.DatetimeNoLeap(endyr, 1, 1))).sum(dim='time')
+    print(emission)
+    plt.figure(figsize=(13,7))
+    ax1 = plt.subplot(1,1,1,projection=ccrs.PlateCarree())
+    ax1.set_extent ((-180, 180, -20, 90), ccrs.PlateCarree())
+    ax1.text(-30,95,model+' '+variable+' avg from '+str(startyr)+' to '+str(endyr)+'')
+    #ax1.stock_img()
+    ax1.coastlines()
+    cs = emission.plot.pcolormesh(ax=ax1,add_colorbar=False,cmap="GnBu",vmin=0, vmax=0.04)#, norm=colors.LogNorm(vmin=emission.min(), vmax=emission.max()))
+    #cs = ax1.pcolormesh(emission, cmap="summer")
+    CB = plt.colorbar(cs,orientation='horizontal',shrink=0.9) #norm=colors.LogNorm(), cmap='coolwarm'
+    print(emission.min(),emission.max())
+    CB.set_label('ng m-2 yr-1', fontsize=15)
+    plt.savefig('test.png')
+    plt.savefig('/cluster/home/krisomos/ice_cores/output/'+model+'_'+variable+'_'+str(startyr)+'-'+str(endyr)+'.png')
+
 
 def emission_per_region(model,var,area):
     from pathfinder import pathfinder_var, pr_pathfinder
@@ -110,7 +152,11 @@ def emission_per_region(model,var,area):
     
 models =  ['CNRM-ESM2-1','CESM2','GFDL-ESM4','CanESM5','GISS-E2-1-H','GISS-E2-1-G','CESM2-WACCM','NorESM2-LM','INM-CM4-8', 'INM-CM5-0'] #'EC-Earth3-AerChem','MPI-ESM-1-2-HAM', ARE MISSING EMISSIONFILES
 #models = ['NorESM2-LM','INM-CM4-8', 'INM-CM5-0']
+emission_maps(models[1],'so4', 1960, 1980)
+
+"""
 areas = ['CHN','NAM','US','USW','USE','EUR','EA','SA']
 for model in models:
     for area in areas:
         emission_per_region(model,'so4',area)
+"""
