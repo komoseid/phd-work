@@ -356,6 +356,53 @@ def model_concentration_timeseries_damip(model, var, lati, longi):
     out = xr.DataArray(conc, name='Conc_Absolute')
     return out
 
+def model_concentration_timeseries_aerchemmip(model, var, lati, longi):
+    from pathfinder import pathfinder_aerchemmip
+    from pathfinder import pr_pathfinder
+
+    if 'NorESM' in model:
+        path = '/cluster/home/krisomos/noresmdata/'  #This folder needs to be sshfs-ed
+    else:
+        path = '/trd-project1/' # Betzy
+        
+    wet = 'wet'+var
+    dry = 'dry'+var
+    
+    wetpath = pathfinder_aerchemmip(model,wet,'AER')
+    drypath = pathfinder_aerchemmip(model,dry,'AER')
+    prpath  = pathfinder_aerchemmip(model,'pr','A')
+    histprpath, ctrlprpath, areafile  = pr_pathfinder(model)
+
+    
+    # Create one sorted timeseries per variable in Q 
+    vaat      = lookup(path+wetpath,wet)
+    #vaat_ctrl = lookup(path+ctrlwetpath,wet)
+    torr      = lookup(path+drypath,dry)
+    #torr_ctrl = lookup(path+ctrldrypath,dry)
+    pr        = lookup(path+prpath,'pr')
+    #pr_ctrl   = lookup(path+ctrlprpath,'pr')
+
+    area      = xr.open_dataset(path+areafile)['areacella']
+
+    # Calculate the concentration from the historical experiment and change unit to kg
+    area = find_3x3matrix(area,lati,longi,True)                 # m2
+
+    torr = find_3x3matrix(torr, lati,longi)                     # kg m-2 s-1
+    torr = torr*area.values*(365*24*60*60)                      # kg
+
+    vaat = find_3x3matrix(vaat, lati,longi)                     # kg m-2 s-1
+    vaat = vaat*area.values*(365*24*60*60)                      # kg
+
+    prec = find_3x3matrix(pr,lati,longi)                        # kg m-2 s-1
+    acc = prec
+    prec = prec*area.values*(365*24*60*60)                      # kg
+
+    tot_dep = np.absolute(torr) + np.absolute(vaat)             # kg
+    conc = (tot_dep/prec)*(1E12/1E3)                            # kg/kg --> ng/g
+    print(len(conc))
+    out = xr.DataArray(conc, name='Conc_Absolute')
+    return out
+
 def acc_rate(model, lati, longi):
     # This function calculates the accumulation rates per ice core site
     # This is an important first step to check if models are way off on the local "climate" of a site.
@@ -432,6 +479,41 @@ def write_netcdf_damip(name, var):
             print(outfile)
 
         outfile.to_netcdf('/cluster/home/krisomos/ice_cores/output/'+var+'_'+models[j]+'_'+name+'_hist-nat_conc.nc')
+        
+def write_netcdf_aerchemmip(name, var):
+    # This function writes a netcdffile per model for the area and variable given. 
+    # "name" refers to ice core site, and the function needed to find the ice core data 
+    # depending on the name. 
+    # ----------------------------------------------------------------------------
+    #print(name)
+    if 'Colle' in name:
+        data, year, lat, lon = find_eichler_icecore(name,var)
+    elif 'Belukha' in name:
+        data, year, lat, lon = find_eichler_icecore(name,var)
+    elif 'Lomonosov' in name:
+        data, year, lat, lon = find_eichler_icecore(name,var)
+    elif 'Illimani' in name:
+        data, year, lat, lon = find_eichler_icecore(name,var)
+    elif 'green' in name:
+        data, year, lat, lon = find_mcconnell_icecore(name,var)
+    else:
+        data, year, lat, lon = find_other_icecore(name,var)
+    
+    models =  ['CESM2-WACCM'] #,'CanESM5','CESM2'
+
+    for j in range(len(models)):
+        if len(lat)>1:
+            outlist = []
+            for i in range(len(lat)):
+                outfile = model_concentration_timeseries_aerchemmip(models[j],var,lat[i],lon[i])
+                outlist.append(outfile.values)
+            outfile = xr.DataArray(np.mean(outlist,axis=0), name='Conc_Absolute')
+
+        else:
+            outfile = model_concentration_timeseries_aerchemmip(models[j],var,lat,lon)
+            print(outfile)
+
+        outfile.to_netcdf('/cluster/home/krisomos/ice_cores/output/'+var+'_'+models[j]+'_'+name+'_hist-piNTCF_conc.nc')
 
 def write_netcdf(name, var):
     # This function writes a netcdffile per model for the area and variable given. 
@@ -440,10 +522,7 @@ def write_netcdf(name, var):
     # ----------------------------------------------------------------------------
     #print(name)
     if 'Colle' in name:
-        if novolc == True:
-            data, year, lat, lon = find_eichler_icecore_novolc(name,var)
-        else:
-            data, year, lat, lon = find_eichler_icecore(name,var)
+        data, year, lat, lon = find_eichler_icecore(name,var)
     elif 'Belukha' in name:
         data, year, lat, lon = find_eichler_icecore(name,var)
     elif 'Lomonosov' in name:
@@ -478,7 +557,7 @@ eichler_areas = ['Colle Gnifetti', 'Lomonosovfonna','Illimani'] # 'Belukha' has 
 other_areas_bc = ['UFG','McCall_Glacier','Eclipse','Mt Oxford','Akademii Nauk','ColDuDome']
 other_areas_s = ['ColDuDome','Mt Elbrus','McCall_Glacier','Mt Logan','Eclipse','Mt Oxford','Akademii Nauk']
 
-write_netcdf_damip(eichler_areas[0],'so4')
+write_netcdf_aerchemmip(eichler_areas[0],'so4')
 
 
 #for k in range(len(other_areas_s)):

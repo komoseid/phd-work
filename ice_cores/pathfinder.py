@@ -158,6 +158,12 @@ def pathfinder_damip(model,var,mon):
         hist = 'CMIP6/DAMIP/NCC/'+model+'/hist-nat/r1i1p1f1/'+mon+'mon/'+var+'/gn/latest/*'
     
     return hist
+
+def pathfinder_aerchemmip(model,var,mon):
+    if 'CESM2-WACCM' in model:
+        # both models have pr and bc as below
+        hist = 'NS9252K/ESGF/CMIP6/AerChemMIP/NCAR/'+model+'/hist-piNTCF/r1i2p1f1/'+mon+'mon/'+var+'/gn/latest/*'
+    return hist
 """
         histwet = '/historical/r1i1p1f1/AERmon/wet'+var+'/gn/v*/*'
         histdry = '/historical/r1i1p1f1/AERmon/dry'+var+'/gn/v*/*'

@@ -96,7 +96,7 @@ def emission_maps(model, var, startyr, endyr):
     ax1.text(-30,95,model+' '+variable+' avg from '+str(startyr)+' to '+str(endyr)+'')
     #ax1.stock_img()
     ax1.coastlines()
-    cs = emission.plot.pcolormesh(ax=ax1,add_colorbar=False,cmap="GnBu",vmin=0, vmax=0.04)#, norm=colors.LogNorm(vmin=emission.min(), vmax=emission.max()))
+    cs = emission.plot.pcolormesh(ax=ax1,add_colorbar=False,cmap="gnuplot2",vmin=0, vmax=0.04)#, norm=colors.LogNorm(vmin=emission.min(), vmax=emission.max()))
     #cs = ax1.pcolormesh(emission, cmap="summer")
     CB = plt.colorbar(cs,orientation='horizontal',shrink=0.9) #norm=colors.LogNorm(), cmap='coolwarm'
     print(emission.min(),emission.max())
