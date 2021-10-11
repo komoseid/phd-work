@@ -1,0 +1,7 @@
+  &  &   ERF &  ERF_surf & AtmAbs & ERF CS & ERF_surf clear sky & AtmAbs CS 
+ BC & & & & & & & 
+& MRI-ESM2-0 & 0.25 & -2.70 & 2.96  \\ 
+& GISS-E2-1-G & 0.06 & -0.65 & 0.72  \\ 
+& CNRM-ESM2-1 & 0.11 & -0.57 & 0.69  \\ 
+& NorESM2-LM & 0.24 & -0.62 & 0.86  \\ 
+& MIROC6 & -0.45 & -0.38 & -0.07  \\ 
